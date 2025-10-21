@@ -34,6 +34,7 @@
 #include "hw/intc/sifive_plic.h"
 #include "hw/misc/unimp.h"
 #include "hw/char/pl011.h"
+#include "hw/spi/spi.h" // 添加 SPI 控制器相关头文件
 
 /* TODO: you need include some header files */
 
@@ -50,9 +51,17 @@ static const MemMapEntry g233_memmap[] = {
 static void g233_soc_init(Object *obj)
 {
     /*
-     * You can add more devices here(e.g. cpu, gpio)
+     * You can add more devices here (e.g., cpu, gpio, spi)
      * Attention: The cpu resetvec is 0x1004
+     * Ensure SPI initialization is complete and mapped correctly.
      */
+}
+
+static void g233_spi_init(G233SoCState *s, const MemMapEntry *memmap) {
+    /* 初始化 SPI 控制器寄存器 */
+    memory_region_init_io(&s->spi, OBJECT(s), &unimplemented_ops, s,
+                          "riscv.g233.spi", memmap[G233_DEV_SPI].size);
+    memory_region_add_subregion(get_system_memory(), memmap[G233_DEV_SPI].base, &s->spi);
 }
 
 static void g233_soc_realize(DeviceState *dev, Error **errp)
@@ -119,6 +128,8 @@ static void g233_soc_realize(DeviceState *dev, Error **errp)
     create_unimplemented_device("riscv.g233.pwm0",
         memmap[G233_DEV_PWM0].base, memmap[G233_DEV_PWM0].size);
 
+    /* SPI 控制器初始化 */
+    g233_spi_init(s, memmap);
 }
 
 static void g233_soc_class_init(ObjectClass *oc, const void *data)
